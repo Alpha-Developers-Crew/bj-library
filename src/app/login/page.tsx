@@ -23,12 +23,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    try {
-      const result = await login(username, password);
-      if (result?.error) setError(result.error);
-    } catch {
-      setError("Login failed. Please try again.");
-    }
+    const result = await login(username, password);
+    if (result?.error) setError(result.error);
     setLoading(false);
   };
 
