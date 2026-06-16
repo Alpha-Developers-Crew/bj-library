@@ -4,7 +4,7 @@ import { NextResponse, NextRequest } from "next/server";
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   cookieStore.delete("token");
-  const response = NextResponse.redirect(new URL("/login", request.url));
+  const response = NextResponse.redirect(new URL("/login", request.url), { status: 303 });
   response.cookies.delete("token");
   return response;
 }
@@ -12,5 +12,5 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   cookieStore.delete("token");
-  return NextResponse.redirect(new URL("/login", request.url));
+  return NextResponse.redirect(new URL("/login", request.url), { status: 303 });
 }

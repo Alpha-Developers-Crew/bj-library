@@ -30,7 +30,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-screen w-64 bg-sidebar flex flex-col transform transition-transform duration-300 ease-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-dvh w-64 bg-sidebar flex flex-col transform transition-transform duration-300 ease-out lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } shadow-2xl shadow-black/50`}
       >
