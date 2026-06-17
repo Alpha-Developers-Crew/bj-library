@@ -68,6 +68,14 @@ export default function NewStudentPage() {
     return seats.filter((s) => !takenNums.has(s.id) || selectedInForm.has(s.id));
   };
 
+  const getAvailableSlots = (currentIdx: number) => {
+    const selectedOtherSlots = assignments
+      .filter((_, i) => i !== currentIdx)
+      .map((a) => a.timeSlotId)
+      .filter(Boolean);
+    return slots.filter((s) => !selectedOtherSlots.includes(s.id));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); setLoading(true);
@@ -145,7 +153,7 @@ export default function NewStudentPage() {
                       onChange={(e) => updateAssignment(idx, "timeSlotId", e.target.value)}
                       className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300">
                       <option value="">— Select Slot —</option>
-                      {slots.map((s) => (
+                      {getAvailableSlots(idx).map((s) => (
                         <option key={s.id} value={s.id}>{s.name} ({s.startTime}-{s.endTime}) — ₹{s.fee}/mo</option>
                       ))}
                     </select>

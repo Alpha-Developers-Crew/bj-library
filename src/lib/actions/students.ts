@@ -131,6 +131,10 @@ export async function createStudentWithSeatAndFee(data: {
   });
 
   if (data.assignments && data.assignments.length > 0) {
+    const slotIds = data.assignments.map((a) => a.timeSlotId).filter(Boolean);
+    if (new Set(slotIds).size !== slotIds.length) {
+      throw new Error("Cannot assign the same time slot more than once");
+    }
     for (const a of data.assignments) {
       if (!a.seatId || !a.timeSlotId) continue;
       const existing = await prisma.studentAssignment.findUnique({
