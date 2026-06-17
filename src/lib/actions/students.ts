@@ -110,8 +110,7 @@ export async function createStudentWithSeatAndFee(data: {
   motherName?: string;
   joinDate?: string;
   expiryDate: string;
-  seatId?: string;
-  timeSlotId?: string;
+  assignments?: { seatId: string; timeSlotId: string }[];
   feeAmount?: number;
   paymentMode?: string;
   discount?: number;
@@ -131,14 +130,17 @@ export async function createStudentWithSeatAndFee(data: {
     },
   });
 
-  if (data.seatId && data.timeSlotId) {
-    const existing = await prisma.studentAssignment.findUnique({
-      where: { seatId_timeSlotId: { seatId: data.seatId, timeSlotId: data.timeSlotId } },
-    });
-    if (!existing) {
-      await prisma.studentAssignment.create({
-        data: { studentId: student.id, seatId: data.seatId, timeSlotId: data.timeSlotId },
+  if (data.assignments && data.assignments.length > 0) {
+    for (const a of data.assignments) {
+      if (!a.seatId || !a.timeSlotId) continue;
+      const existing = await prisma.studentAssignment.findUnique({
+        where: { seatId_timeSlotId: { seatId: a.seatId, timeSlotId: a.timeSlotId } },
       });
+      if (!existing) {
+        await prisma.studentAssignment.create({
+          data: { studentId: student.id, seatId: a.seatId, timeSlotId: a.timeSlotId },
+        });
+      }
     }
   }
 

@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { createStudentWithSeatAndFee } from "@/lib/actions/students";
 import { getSlots } from "@/lib/actions/slots";
 import { getSeats } from "@/lib/actions/seats";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { addMonths, format } from "date-fns";
+import { addMonths, differenceInCalendarMonths, format } from "date-fns";
 
 interface Slot { id: string; name: string; startTime: string; endTime: string; fee: number; assignments: { student: { id: string }; seat: { id: string } }[] }
 interface Seat { id: string; seatNumber: number; assignments: { timeSlot: { id: string } }[] }
@@ -22,8 +22,10 @@ export default function NewStudentPage() {
     name: "", mobile: "", address: "", fatherName: "", motherName: "",
     joinDate: format(new Date(), "yyyy-MM-dd"),
     expiryDate: format(addMonths(new Date(), 1), "yyyy-MM-dd"),
-    timeSlotId: "", seatId: "", feeAmount: "", paymentMode: "CASH", discount: "",
+    discount: "",
+    feeAmount: "", paymentMode: "CASH",
   });
+  const [assignments, setAssignments] = useState([{ timeSlotId: "", seatId: "" }]);
 
   useEffect(() => {
     Promise.all([getSlots(), getSeats()]).then(([s, se]) => {
@@ -32,24 +34,50 @@ export default function NewStudentPage() {
     });
   }, []);
 
-  const selectedSlot = slots.find((s) => s.id === form.timeSlotId);
-  const takenSeatIds = selectedSlot
-    ? new Set(selectedSlot.assignments.map((a) => a.seat.id))
-    : new Set<string>();
-  const availableSeats = form.timeSlotId
-    ? seats.filter((s) => !takenSeatIds.has(s.id))
-    : [];
+  const addAssignment = () => setAssignments([...assignments, { timeSlotId: "", seatId: "" }]);
+  const removeAssignment = (idx: number) => {
+    if (assignments.length <= 1) return;
+    setAssignments(assignments.filter((_, i) => i !== idx));
+  };
+  const updateAssignment = (idx: number, key: "timeSlotId" | "seatId", value: string) => {
+    const updated = assignments.map((a, i) => i === idx ? { ...a, [key]: value } : a);
+    setAssignments(updated);
+  };
+
+  const usedSlotIds = assignments.map((a) => a.timeSlotId).filter(Boolean);
+  const totalSlotFee = assignments.reduce((sum, a) => {
+    const slot = slots.find((s) => s.id === a.timeSlotId);
+    return sum + (slot?.fee || 0);
+  }, 0);
+  const discount = parseFloat(form.discount) || 0;
+  const netMonthly = Math.max(0, totalSlotFee - discount);
+  const joinDate = form.joinDate ? new Date(form.joinDate) : new Date();
+  const expiryDate = form.expiryDate ? new Date(form.expiryDate) : new Date();
+  const totalMonths = Math.max(1, differenceInCalendarMonths(expiryDate, joinDate));
+  const totalDue = netMonthly * totalMonths;
+
+  const getAvailableSeats = (slotId: string, currentIdx: number) => {
+    if (!slotId) return [];
+    const slot = slots.find((s) => s.id === slotId);
+    if (!slot) return [];
+    const takenNums = new Set(slot.assignments.map((a) => a.seat.id));
+    const selectedInForm = new Set<string>();
+    assignments.forEach((a, i) => {
+      if (i !== currentIdx && a.timeSlotId === slotId && a.seatId) selectedInForm.add(a.seatId);
+    });
+    return seats.filter((s) => !takenNums.has(s.id) || selectedInForm.has(s.id));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); setLoading(true);
     try {
+      const validAssignments = assignments.filter((a) => a.timeSlotId && a.seatId);
       await createStudentWithSeatAndFee({
         name: form.name, mobile: form.mobile, address: form.address,
         fatherName: form.fatherName, motherName: form.motherName,
         joinDate: form.joinDate, expiryDate: form.expiryDate,
-        seatId: form.seatId || undefined,
-        timeSlotId: form.timeSlotId || undefined,
+        assignments: validAssignments.length > 0 ? validAssignments : undefined,
         feeAmount: form.feeAmount ? parseFloat(form.feeAmount) : undefined,
         paymentMode: form.paymentMode,
         discount: form.discount ? parseFloat(form.discount) : 0,
@@ -105,39 +133,82 @@ export default function NewStudentPage() {
           </div>
 
           <div className="border-t border-border pt-4 mt-2">
-            <h3 className="text-sm font-semibold text-text mb-3">Seat Assignment (Optional)</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">Time Slot</label>
-                <select value={form.timeSlotId}
-                  onChange={(e) => { setForm({ ...form, timeSlotId: e.target.value, seatId: "", feeAmount: "" }); }}
-                  className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300">
-                  <option value="">— Select Slot —</option>
-                  {slots.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.startTime}-{s.endTime}) — ₹{s.fee}/mo</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">Seat</label>
-                <select value={form.seatId} disabled={!form.timeSlotId}
-                  onChange={(e) => setForm({ ...form, seatId: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 disabled:opacity-50">
-                  <option value="">— Select Seat —</option>
-                  {availableSeats.map((s) => (
-                    <option key={s.id} value={s.id}>Seat #{s.seatNumber}</option>
-                  ))}
-                </select>
-              </div>
+            <h3 className="text-sm font-semibold text-text mb-3">Seat Assignments (Optional)</h3>
+            <div className="space-y-3">
+              {assignments.map((a, idx) => (
+                <div key={idx} className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-text-secondary mb-1">
+                      Slot {idx + 1} {usedSlotIds.filter((id) => id === a.timeSlotId).length > 1 ? "(duplicate)" : ""}
+                    </label>
+                    <select value={a.timeSlotId}
+                      onChange={(e) => updateAssignment(idx, "timeSlotId", e.target.value)}
+                      className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300">
+                      <option value="">— Select Slot —</option>
+                      {slots.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.startTime}-{s.endTime}) — ₹{s.fee}/mo</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-text-secondary mb-1">Seat</label>
+                    <select value={a.seatId} disabled={!a.timeSlotId}
+                      onChange={(e) => updateAssignment(idx, "seatId", e.target.value)}
+                      className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 disabled:opacity-50">
+                      <option value="">— Select Seat —</option>
+                      {getAvailableSeats(a.timeSlotId, idx).map((s) => (
+                        <option key={s.id} value={s.id}>Seat #{s.seatNumber}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {assignments.length > 1 && (
+                    <button type="button" onClick={() => removeAssignment(idx)}
+                      className="p-2.5 mb-0.5 rounded-lg hover:bg-danger/15 text-text-muted hover:text-danger transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button type="button" onClick={addAssignment}
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium transition-colors">
+                <Plus className="w-4 h-4" /> Add Another Slot
+              </button>
             </div>
           </div>
+
+          {totalSlotFee > 0 && (
+            <div className="bg-hover/50 rounded-xl p-4 border border-border space-y-1.5 text-sm">
+              <div className="flex justify-between text-text-secondary">
+                <span>Total Slot Fees</span>
+                <span className="font-medium text-text">₹{totalSlotFee}/mo</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-text-secondary">
+                  <span>Discount</span>
+                  <span className="font-medium text-success">- ₹{discount}/mo</span>
+                </div>
+              )}
+              <div className="flex justify-between text-text-secondary">
+                <span>Net Monthly Fee</span>
+                <span className="font-medium text-text">₹{netMonthly}/mo</span>
+              </div>
+              <div className="flex justify-between text-text-secondary">
+                <span>Duration</span>
+                <span className="font-medium text-text">{totalMonths} month{totalMonths > 1 ? "s" : ""}</span>
+              </div>
+              <div className="flex justify-between text-text border-t border-border pt-1.5 mt-1.5">
+                <span className="font-semibold">Total Due (after discount)</span>
+                <span className="font-bold text-primary">₹{totalDue.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">Initial Fee (₹)</label>
               <input type="number" min="0" value={form.feeAmount}
                 onChange={(e) => setForm({ ...form, feeAmount: e.target.value })}
-                placeholder={selectedSlot ? `₹${selectedSlot.fee} (slot fee)` : "0"}
+                placeholder={totalSlotFee > 0 ? `₹${totalSlotFee} (slot fee)` : "0"}
                 className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300" />
             </div>
             <div>
