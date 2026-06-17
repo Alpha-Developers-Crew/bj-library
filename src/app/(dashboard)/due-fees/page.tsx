@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 import { isBefore, differenceInDays, format } from "date-fns";
 
 interface StudentData {
-  id: string; name: string; mobile: string; expiryDate: Date; activeStatus: boolean;
+  id: string; name: string; mobile: string; expiryDate: Date; activeStatus: boolean; discount: number;
   assignments: { timeSlot: { fee: number } }[]; payments: { amount: number }[];
 }
 
@@ -38,8 +38,9 @@ export default function DueFeesPage() {
     upcoming: students.filter((s) => { const e = new Date(s.expiryDate); return !isBefore(e, now) && isBefore(e, upcomingThreshold); }),
     pending: students.filter((s) => {
       const fee = s.assignments.reduce((sum, a) => sum + a.timeSlot.fee, 0);
+      const netFee = Math.max(0, fee - (s.discount || 0));
       const paid = s.payments.reduce((sum, p) => sum + p.amount, 0);
-      return fee > 0 && paid < fee && s.activeStatus && !isBefore(new Date(s.expiryDate), now);
+      return netFee > 0 && paid < netFee && s.activeStatus && !isBefore(new Date(s.expiryDate), now);
     }),
   };
   const currentList = lists[tab];
@@ -53,8 +54,9 @@ export default function DueFeesPage() {
 
   const getFeeStatus = (s: StudentData) => {
     const fee = s.assignments.reduce((sum, a) => sum + a.timeSlot.fee, 0);
+    const netFee = Math.max(0, fee - (s.discount || 0));
     const paid = s.payments.reduce((sum, p) => sum + p.amount, 0);
-    return Math.max(0, fee - paid);
+    return Math.max(0, netFee - paid);
   };
 
   if (loading) return (
