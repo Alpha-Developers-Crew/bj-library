@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Armchair, Clock, IndianRupee,
-  RefreshCw, AlertTriangle, FileBarChart, LogOut, X, Library, User,
+  RefreshCw, Percent, AlertTriangle, FileBarChart, LogOut, X, Library, User,
 } from "lucide-react";
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/slots", label: "Time Slots", icon: Clock },
   { href: "/fees", label: "Fees", icon: IndianRupee },
   { href: "/renewals", label: "Renewals", icon: RefreshCw },
+  { href: "/discounts", label: "Discounts", icon: Percent },
   { href: "/due-fees", label: "Due Fees", icon: AlertTriangle },
   { href: "/reports", label: "Reports", icon: FileBarChart },
 ];

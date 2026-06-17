@@ -15,6 +15,7 @@ export interface StudentReportRow {
   shiftTimes: string;
   shiftCount: number;
   monthlyFee: number;
+  discount: number;
   totalDue: number;
   cashPaid: number;
   onlinePaid: number;
@@ -36,12 +37,14 @@ export async function getStudentReport(): Promise<StudentReportRow[]> {
 
   return students.map((s, idx) => {
     const monthlyFee = s.assignments.reduce((sum, a) => sum + a.timeSlot.fee, 0);
+    const discount = s.discount || 0;
+    const netMonthly = Math.max(0, monthlyFee - discount);
     const seatNumbers = s.assignments.map((a) => `#${a.seat.seatNumber}`).join(", ");
     const shiftTimes = s.assignments.map((a) => a.timeSlot.name).join(", ");
     const shiftCount = s.assignments.length;
 
     const monthsInPeriod = Math.max(1, differenceInCalendarMonths(s.expiryDate, s.joinDate));
-    const totalDue = monthlyFee * monthsInPeriod;
+    const totalDue = netMonthly * monthsInPeriod;
 
     let cashPaid = 0;
     let onlinePaid = 0;
@@ -63,6 +66,7 @@ export async function getStudentReport(): Promise<StudentReportRow[]> {
       shiftTimes: shiftTimes || "—",
       shiftCount,
       monthlyFee,
+      discount,
       totalDue,
       cashPaid,
       onlinePaid,

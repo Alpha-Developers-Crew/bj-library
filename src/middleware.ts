@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const protectedPaths = [
   "/dashboard", "/students", "/seats", "/slots",
-  "/fees", "/renewals", "/due-fees", "/reports", "/profile",
+  "/fees", "/renewals", "/discounts", "/due-fees", "/reports", "/profile",
 ];
 
 export function middleware(request: NextRequest) {

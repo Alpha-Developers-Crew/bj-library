@@ -28,6 +28,7 @@ model Student {
   photoUrl     String?
   joinDate     DateTime @default(now())
   expiryDate   DateTime
+  discount     Float    @default(0)
   activeStatus Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

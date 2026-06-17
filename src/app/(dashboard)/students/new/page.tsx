@@ -22,7 +22,7 @@ export default function NewStudentPage() {
     name: "", mobile: "", address: "", fatherName: "", motherName: "",
     joinDate: format(new Date(), "yyyy-MM-dd"),
     expiryDate: format(addMonths(new Date(), 1), "yyyy-MM-dd"),
-    timeSlotId: "", seatId: "", feeAmount: "", paymentMode: "CASH",
+    timeSlotId: "", seatId: "", feeAmount: "", paymentMode: "CASH", discount: "",
   });
 
   useEffect(() => {
@@ -52,6 +52,7 @@ export default function NewStudentPage() {
         timeSlotId: form.timeSlotId || undefined,
         feeAmount: form.feeAmount ? parseFloat(form.feeAmount) : undefined,
         paymentMode: form.paymentMode,
+        discount: form.discount ? parseFloat(form.discount) : 0,
       });
       router.push("/students");
     } catch { setError("Failed to create student"); }
@@ -131,12 +132,19 @@ export default function NewStudentPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">Initial Fee (₹)</label>
               <input type="number" min="0" value={form.feeAmount}
                 onChange={(e) => setForm({ ...form, feeAmount: e.target.value })}
                 placeholder={selectedSlot ? `₹${selectedSlot.fee} (slot fee)` : "0"}
+                className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">Discount (₹/mo)</label>
+              <input type="number" min="0" value={form.discount}
+                onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                placeholder="0"
                 className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300" />
             </div>
             <div>

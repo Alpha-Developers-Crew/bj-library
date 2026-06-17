@@ -15,7 +15,7 @@ import { format, isBefore } from "date-fns";
 
 interface StudentData {
   id: string; name: string; mobile: string; address: string | null; fatherName: string | null; motherName: string | null;
-  joinDate: Date; expiryDate: Date; activeStatus: boolean;
+  joinDate: Date; expiryDate: Date; activeStatus: boolean; discount: number;
   assignments: { id: string; seat: { id: string; seatNumber: number }; timeSlot: { id: string; name: string; fee: number; startTime: string; endTime: string }; assignmentDate: Date }[];
   payments: { id: string; amount: number; paymentDate: Date; notes: string | null }[];
   renewals: { id: string; previousExpiry: Date; newExpiry: Date; renewalDate: Date }[];
@@ -76,8 +76,10 @@ export default function StudentDetailPage() {
 
   const expired = isBefore(new Date(student.expiryDate), new Date());
   const monthlyFee = student.assignments.reduce((sum, a) => sum + a.timeSlot.fee, 0);
+  const discount = student.discount || 0;
+  const netMonthly = Math.max(0, monthlyFee - discount);
   const totalPaid = student.payments.reduce((sum, p) => sum + p.amount, 0);
-  const pending = Math.max(0, monthlyFee - totalPaid);
+  const pending = Math.max(0, netMonthly - totalPaid);
 
   const availableSeatsForSlot = (slotId: string) => {
     const slot = (slots as { id: string; assignments: { seat: { seatNumber: number } }[] }[]).find((s) => s.id === slotId);
@@ -217,12 +219,13 @@ export default function StudentDetailPage() {
             Record Payment
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          {[
-            { label: "Monthly Fee", value: monthlyFee, color: "text-primary" },
-            { label: "Total Paid", value: totalPaid, color: "text-primary" },
-            { label: "Pending", value: pending, color: "text-danger" },
-          ].map((item) => (
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
+            {[
+              { label: "Monthly Fee", value: monthlyFee, color: "text-primary" },
+              { label: "Discount / Mo", value: discount, color: "text-success" },
+              { label: "Total Paid", value: totalPaid, color: "text-primary" },
+              { label: "Pending", value: pending, color: "text-danger" },
+            ].map((item) => (
             <div key={item.label} className="bg-hover/50 rounded-xl p-4 border border-border">
               <p className="text-sm text-text-muted">{item.label}</p>
               <p className={`text-2xl font-bold mt-1 ${item.color}`}>₹{item.value.toLocaleString()}</p>

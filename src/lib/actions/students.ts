@@ -114,6 +114,7 @@ export async function createStudentWithSeatAndFee(data: {
   timeSlotId?: string;
   feeAmount?: number;
   paymentMode?: string;
+  discount?: number;
 }) {
   await requireAdmin();
   if (!data.fatherName) throw new Error("Father's name is required");
@@ -124,6 +125,7 @@ export async function createStudentWithSeatAndFee(data: {
       address: data.address,
       fatherName: data.fatherName,
       motherName: data.motherName,
+      discount: data.discount ?? 0,
       joinDate: data.joinDate ? new Date(data.joinDate) : new Date(),
       expiryDate: new Date(data.expiryDate),
     },

@@ -44,7 +44,7 @@ export default function ReportsPage() {
     const headers = [
       "S.No", "Student's Name", "Father's Name", "Mobile No.",
       "Admission", "Expiry", "Seat", "Shift",
-      "#Shifts", "Fee/Month", "Total Due",
+      "#Shifts", "Fee/Month", "Discount", "Total Due",
       "Cash", "Online", "Pending",
     ];
 
@@ -55,7 +55,7 @@ export default function ReportsPage() {
       r.sNo, r.name, r.fatherName || "", r.mobile,
       format(r.joinDate, "dd/MM/yyyy"), format(r.expiryDate, "dd/MM/yyyy"),
       r.seatNumbers, r.shiftTimes, r.shiftCount,
-      r.monthlyFee, r.totalDue, r.cashPaid, r.onlinePaid, r.balanceAmount,
+      r.monthlyFee, r.discount, r.totalDue, r.cashPaid, r.onlinePaid, r.balanceAmount,
     ]);
     dataRows.forEach((row) => worksheet.addRow(row));
 
@@ -161,6 +161,7 @@ export default function ReportsPage() {
                   <th className="px-3 py-3 text-left text-xs font-semibold text-text-muted uppercase">Shift</th>
                   <th className="px-3 py-3 text-center text-xs font-semibold text-text-muted uppercase">#Shifts</th>
                   <th className="px-3 py-3 text-right text-xs font-semibold text-text-muted uppercase">Fee/Month</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-text-muted uppercase">Discount</th>
                   <th className="px-3 py-3 text-right text-xs font-semibold text-text-muted uppercase">Total Due</th>
                   <th className="px-3 py-3 text-right text-xs font-semibold text-text-muted uppercase">Cash</th>
                   <th className="px-3 py-3 text-right text-xs font-semibold text-text-muted uppercase">Online</th>
@@ -180,6 +181,7 @@ export default function ReportsPage() {
                     <td className="px-3 py-3 text-text-muted text-xs">{r.shiftTimes}</td>
                     <td className="px-3 py-3 text-center text-text-secondary">{r.shiftCount}</td>
                     <td className="px-3 py-3 text-right font-medium text-text-secondary">₹{r.monthlyFee}</td>
+                    <td className="px-3 py-3 text-right font-medium text-success">₹{r.discount}</td>
                     <td className="px-3 py-3 text-right font-medium text-text">₹{r.totalDue.toLocaleString()}</td>
                     <td className="px-3 py-3 text-right text-success font-medium">₹{r.cashPaid.toLocaleString()}</td>
                     <td className="px-3 py-3 text-right text-accent font-medium">₹{r.onlinePaid.toLocaleString()}</td>
